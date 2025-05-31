@@ -1,0 +1,27 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+def detech_arch
+  case RbConfig::CONFIG['host_cpu']
+  when /arm|aarch64/
+    'arm64'
+  when /x86_64|amd64/
+    'x86_64'
+  else
+    'unknown'
+  end
+end  
+
+arch = detech_arch
+puts "Detected architecture: #{arch}"
+Vagrant.configure("2") do |config|
+case arch
+when 'arm64'
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.box_version = "20231009.0.0"
+when 'x86_64'
+  config.vm.box = "ubuntu/jammy64"
+  config.vm.box_version = "20231009.0.0"
+else
+  raise "Unsupported architecture: #{arch}"
+end
