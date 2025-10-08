@@ -10,13 +10,13 @@ if k3d cluster list | grep -q "iot-p3"; then
 fi
 
 # Create K3d cluster with correct port mapping
-# Port 8888 on host -> Port 80 on loadbalancer (Traefik ingress)
+# Port 8888 on host -> Port 8888 on loadbalancer (for LoadBalancer service)
 echo "Creating new K3d cluster..."
 k3d cluster create iot-p3 \
     --servers 1 \
     --agents 0 \
     --api-port 6550 \
-    -p "8888:80@loadbalancer"
+    -p "8888:8888@loadbalancer"
 
 # Verify cluster is running
 echo ""
