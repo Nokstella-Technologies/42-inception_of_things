@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>{{APP_NAME}}</title>
+    <style>
+      body {
+        background: #222;
+        color: #fafafa;
+        font-family: "Segoe UI", Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        justify-content: center;
+      }
+      .container {
+        background: #2d2d2d;
+        border-radius: 10px;
+        box-shadow: 0 2px 16px rgba(0, 0, 0, 0.4);
+        padding: 36px 48px;
+        text-align: center;
+        max-width: 340px;
+      }
+      .logo {
+        width: 88px;
+        margin-bottom: 18px;
+      }
+      h1 {
+        color: #00a3ff;
+        font-size: 32px;
+        margin-bottom: 18px;
+      }
+      .subtitle {
+        background: #393939;
+        border-radius: 6px;
+        font-size: 26px;
+        padding: 8px;
+        margin-bottom: 24px;
+        color: #eee;
+        letter-spacing: 1px;
+      }
+      .info {
+        background: #222;
+        border-radius: 6px;
+        font-size: 17px;
+        padding: 16px 0;
+        text-align: left;
+        color: #ccc;
+        margin-top: 12px;
+        font-family: monospace;
+      }
+      .info b {
+        color: #fff;
+        display: inline-block;
+        width: 60px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <img
+        class="logo"
+        src="https://raw.githubusercontent.com/kubernetes/kubernetes/master/logo/logo.png"
+        alt="Kubernetes Logo"
+      />
+      <h1>kubernetes</h1>
+      <div class="subtitle">Hello from <span id="appname"></span>.</div>
+      <div class="info">
+        <div><b>pod:</b> <span id="podname">-</span></div>
+        <div><b>node:</b> <span id="nodename">-</span></div>
+      </div>
+    </div>
+    <script src="env.js"></script>
+    <script>
+      document.getElementById("appname").textContent = window.APP_NAME;
+      document.getElementById("podname").textContent = window.POD_NAME;
+      document.getElementById("nodename").textContent = window.NODE_NAME;
+      document.title = window.APP_NAME;
+    </script>
+  </body>
+</html>
