@@ -1,6 +1,30 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+echo "===== Creating K3d Cluster ====="
+
+# Delete existing cluster if it exists
+if k3d cluster list | grep -q "iot-p3"; then
+    echo "Deleting existing cluster iot-p3..."
+    k3d cluster delete iot-p3
+fi
+
+# Create K3d cluster with correct port mapping
+# Port 8888 on host -> Port 80 on loadbalancer (Traefik ingress)
+echo "Creating new K3d cluster..."
+k3d cluster create iot-p3 \
+    --servers 1 \
+    --agents 0 \
+    --api-port 6550 \
+    -p "8888:80@loadbalancer"
+
+# Verify cluster is running
+echo ""
+echo "Verifying cluster..."
+kubectl cluster-info
+kubectl get nodes
+
+echo ""
 echo "===== Installing Argo CD ====="
 
 # Create argocd namespace
@@ -11,25 +35,10 @@ echo "Installing Argo CD..."
 kubectl apply -n argocd -f https://raw.githubusercontent.com/argoproj/argo-cd/stable/manifests/install.yaml
 
 # Wait for Argo CD to be ready
-echo "Waiting for Argo CD to be ready..."
+echo ""
+echo "Waiting for Argo CD to be ready (this may take a few minutes)..."
 kubectl wait --for=condition=available --timeout=300s deployment/argocd-server -n argocd
 
-# Patch argocd-server service to use NodePort
-echo "Configuring Argo CD server service..."
-kubectl patch svc argocd-server -n argocd -p '{"spec": {"type": "NodePort"}}'
-
-# Get initial admin password
 echo ""
 echo "===== Argo CD Installation Complete ====="
-echo ""
-echo "To access Argo CD:"
-echo "1. Port-forward the service:"
-echo "   kubectl port-forward svc/argocd-server -n argocd 8080:443"
-echo ""
-echo "2. Access Argo CD at: https://localhost:8080"
-echo "   Username: admin"
-echo "   Password: (run the command below)"
-echo ""
-echo "Get admin password:"
-echo "   kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d && echo"
-echo ""
+

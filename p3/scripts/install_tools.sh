@@ -60,10 +60,6 @@ fi
 if ! command -v k3d &> /dev/null; then
     echo "\n----- Installing k3d -----"
     curl -s https://raw.githubusercontent.com/k3d-io/k3d/main/install.sh | bash
-    k3d cluster create iot-p3 \
-        --servers 1 --agents 0 \
-        --api-port 6550 \
-        -p "8888:80@loadbalancer"
 else
     echo "\nk3d is already installed."
 fi
