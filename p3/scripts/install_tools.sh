@@ -26,7 +26,7 @@ if ! command -v docker &> /dev/null; then
         echo "Distro não suportada automaticamente"; exit 1;;
     esac
 else
-    echo "Docker is already installed."
+    echo "Docker is already installed." 
 fi
 
 # Start and enable Docker if not already active
@@ -63,7 +63,7 @@ if ! command -v k3d &> /dev/null; then
     k3d cluster create iot-p3 \
         --servers 1 --agents 0 \
         --api-port 6550 \
-        -p "8888:8888@loadbalancer"
+        -p "8888:80@loadbalancer"
 else
     echo "\nk3d is already installed."
 fi
