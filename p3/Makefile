@@ -11,16 +11,16 @@ all: run
 $(K3D):
 	bash scripts/install_tools.sh
 	
-$(CLUSTER):
+$(CLUSTER):$(K3D)
 	bash scripts/setup_argocd.sh
 
-run: $(K3D) $(CLUSTER)
+run: $(CLUSTER)
 	bash scripts/deploy_app.sh
 
 
 clean:
 	bash scripts/clean_and_test.sh
 
-re: clean all
+re: clean run
 
-.PHONY: all clean re
+.PHONY: all clean re run

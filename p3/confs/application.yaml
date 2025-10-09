@@ -16,3 +16,12 @@ spec:
     automated:
       prune: true
       selfHeal: true
+    syncOptions:
+    - CreateNamespace=true
+    - ApplyOutOfSyncOnly=false
+  # Configuração para mostrar recursos filho na UI
+  ignoreDifferences:
+  - group: "*"
+    kind: "*"
+    managedFieldsManagers:
+    - kube-controller-manager
