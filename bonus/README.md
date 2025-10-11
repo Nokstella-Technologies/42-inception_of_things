@@ -1,253 +1,656 @@
-# Bonus: K3d + Argo CD + GitLab
+# 🚀 Inception of Things - Bonus
 
-## 📋 Objetivo
+## 📋 Índice
 
-Configurar um cluster K3d com Argo CD e GitLab local para implementar GitOps completo.
+- [Visão Geral](#visão-geral)
+- [Arquitetura](#arquitetura)
+- [Pré-requisitos](#pré-requisitos)
+- [Instalação Rápida](#instalação-rápida)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Componentes](#componentes)
+- [Configuração Detalhada](#configuração-detalhada)
+- [Uso](#uso)
+- [GitOps Workflow](#gitops-workflow)
+- [Troubleshooting](#troubleshooting)
+- [Credenciais](#credenciais)
 
-## 🎯 Diferenças do Part 3
+---
 
-- **Cluster:** `iot-bonus` (em vez de `iot-p3`)
-- **GitLab:** Instalado localmente usando Helm
-- **Portas:**
-  - 8080: GitLab HTTP
-  - 8888: Aplicação
-  - 2222: GitLab SSH
-- **GitOps:** Argo CD sincroniza com GitLab local (não GitHub)
+## 🎯 Visão Geral
 
-## 🚀 Setup Completo (Automático)
+Este projeto implementa uma **infraestrutura GitOps completa** usando:
 
-Execute um único comando para fazer tudo:
+- **K3d**: Cluster Kubernetes local
+- **GitLab CE**: Sistema de controle de versão auto-hospedado
+- **Argo CD**: Ferramenta de Continuous Delivery para Kubernetes
+- **Aplicação Demo**: `wil42/playground` (v1 e v2)
+
+O objetivo é demonstrar um fluxo GitOps completo onde:
+1. Código é versionado no GitLab local
+2. Argo CD monitora o repositório GitLab
+3. Mudanças no repositório são automaticamente aplicadas no cluster
+4. A aplicação é atualizada sem intervenção manual
+
+---
+
+## 🏗️ Arquitetura
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    K3d Cluster (iot-bonus)                  │
+│                                                             │
+│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐    │
+│  │   GitLab CE  │  │   Argo CD    │  │ Application  │    │
+│  │              │  │              │  │              │    │
+│  │ Port: 8080   │  │ Port: 8090   │  │ Port: 8888   │    │
+│  │ Namespace:   │  │ Namespace:   │  │ Namespace:   │    │
+│  │   gitlab     │  │   argocd     │  │     dev      │    │
+│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘    │
+│         │                 │                 │             │
+│         │    ┌────────────▼─────────────┐   │             │
+│         └────►  GitOps Sync (Auto)      ◄───┘             │
+│              └──────────────────────────┘                 │
+└─────────────────────────────────────────────────────────────┘
+         │                 │                 │
+         ▼                 ▼                 ▼
+   localhost:8080    localhost:8090    localhost:8888
+   (GitLab Web)      (Argo CD Web)     (Application)
+```
+
+### Fluxo GitOps:
+
+```
+Developer → Git Push → GitLab → Argo CD (Monitor) → Kubernetes → Application Updated
+```
+
+---
+
+## 📦 Pré-requisitos
+
+### Ferramentas Necessárias:
+
+- **Docker**: Para executar containers
+- **kubectl**: CLI do Kubernetes
+- **k3d**: Para criar cluster Kubernetes local
+- **Helm**: Gerenciador de pacotes Kubernetes
+- **Git**: Controle de versão
+
+### Sistema Operacional:
+
+- Ubuntu 20.04+ ou Arch Linux
+- Mínimo 8GB RAM
+- Mínimo 20GB espaço em disco
+
+---
+
+## ⚡ Instalação Rápida
+
+### Opção 1: Instalação Completa (Recomendado)
 
 ```bash
-cd /home/llima-ce/code/42-inception_of_things/bonus
-chmod +x scripts/*.sh
+cd bonus
+
+# Instalar todas as ferramentas necessárias
 make all
+
+# Configurar /etc/hosts (requer sudo)
+./scripts/configure_hosts.sh
 ```
 
-Isso vai:
-1. Instalar ferramentas (Docker, kubectl, k3d, Helm)
-2. Criar cluster K3d `iot-bonus`
-3. Instalar Argo CD
-4. Instalar GitLab
-5. Fazer deploy da aplicação
-
-## 🔧 Setup Manual (Passo a Passo)
-
-### Passo 1: Instalar ferramentas
+### Opção 2: Instalação Passo a Passo
 
 ```bash
-chmod +x scripts/install_tools.sh
+cd bonus
+
+# 1. Instalar ferramentas (Docker, kubectl, k3d, Helm)
 ./scripts/install_tools.sh
-```
 
-### Passo 2: Criar cluster e instalar Argo CD
-
-```bash
-chmod +x scripts/setup_argocd.sh
+# 2. Criar cluster K3d e instalar Argo CD
 ./scripts/setup_argocd.sh
-```
 
-### Passo 3: Instalar GitLab
-
-```bash
-chmod +x scripts/setup_gitlab.sh
+# 3. Instalar GitLab CE
 ./scripts/setup_gitlab.sh
-```
 
-**⚠️ Atenção:** A instalação do GitLab pode demorar 5-10 minutos!
+# 4. Configurar /etc/hosts
+./scripts/configure_hosts.sh
 
-### Passo 4: Deploy da aplicação
+# 5. Criar repositório e fazer push dos manifestos
+./scripts/push_to_gitlab.sh
 
-```bash
-chmod +x scripts/deploy_app.sh
+# 6. Configurar Argo CD Application
 ./scripts/deploy_app.sh
 ```
 
-## 🌐 Acessar Serviços
+### Tempo de Instalação:
 
-### GitLab
-- **URL:** http://localhost:8080
-- **Username:** `root`
-- **Password:** Execute o comando abaixo
+- **Ferramentas**: ~5 minutos
+- **Cluster K3d**: ~2 minutos
+- **GitLab**: ~10 minutos (download de imagens)
+- **Argo CD**: ~3 minutos
+- **Total**: ~20 minutos
 
-```bash
-kubectl get secret gitlab-gitlab-initial-root-password -n gitlab -o jsonpath='{.data.password}' | base64 -d && echo
+---
+
+## 📁 Estrutura do Projeto
+
+```
+bonus/
+├── Makefile                    # Automação de tarefas
+├── README.md                   # Este arquivo
+├── scripts/                    # Scripts de automação
+│   ├── install_tools.sh        # Instala Docker, kubectl, k3d, Helm
+│   ├── setup_argocd.sh         # Cria cluster e instala Argo CD
+│   ├── setup_gitlab.sh         # Instala GitLab CE via Helm
+│   ├── configure_hosts.sh      # Configura /etc/hosts
+│   ├── push_to_gitlab.sh       # Cria repo e faz push dos manifestos
+│   ├── deploy_app.sh           # Configura Argo CD Application
+│   ├── create_gitlab_user.sh   # Cria usuário customizado no GitLab
+│   └── clean_and_test.sh       # Remove cluster e recursos
+├── confs/                      # Configurações do Argo CD
+│   ├── application.yaml        # Argo CD Application manifest
+│   └── dev-namespace.yaml      # Namespace dev
+└── remote/                     # Manifestos Kubernetes (versionados no GitLab)
+    ├── deployment.yaml         # Deployment da aplicação
+    └── service.yaml            # Service LoadBalancer
 ```
 
-### Argo CD
-- **URL:** https://localhost:8090
-- **Username:** `admin`
-- **Password:** Execute o comando abaixo
+---
+
+## 🔧 Componentes
+
+### 1. **K3d Cluster**
+
+- **Nome**: `iot-bonus`
+- **Versão**: Latest
+- **Port Mappings**:
+  - `8080:80@loadbalancer` → GitLab HTTP
+  - `8888:8888@loadbalancer` → Aplicação
+  - `2222:22@loadbalancer` → GitLab SSH
+
+### 2. **GitLab CE**
+
+- **Namespace**: `gitlab`
+- **Chart**: `gitlab/gitlab`
+- **Configuração**:
+  - Ingress: Traefik
+  - TLS: Desabilitado (HTTP only)
+  - Runner: Desabilitado
+  - Prometheus: Desabilitado
+  - Réplicas: 1 (mínimo para ambiente local)
+
+**Componentes GitLab:**
+- `gitlab-webservice`: Interface web e API
+- `gitlab-sidekiq`: Jobs em background
+- `gitlab-shell`: Acesso SSH
+- `gitlab-gitaly`: Armazenamento de repositórios Git
+- `postgresql`: Banco de dados
+- `redis`: Cache
+- `minio`: Object storage
+
+### 3. **Argo CD**
+
+- **Namespace**: `argocd`
+- **Versão**: Stable
+- **Modo**: Standalone
+- **Sync Policy**: Automático com `prune` e `selfHeal`
+
+### 4. **Aplicação Demo**
+
+- **Imagem**: `wil42/playground:v1` / `v2`
+- **Namespace**: `dev`
+- **Service**: LoadBalancer (porta 8888)
+- **Replicas**: 1
+
+---
+
+## ⚙️ Configuração Detalhada
+
+### Cluster K3d
 
 ```bash
-kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d && echo
+k3d cluster create iot-bonus \
+  --api-port 6443 \
+  --port 8080:80@loadbalancer \
+  --port 8888:8888@loadbalancer \
+  --port 2222:22@loadbalancer \
+  --agents 1
 ```
 
-### Aplicação
-- **URL:** http://localhost:8888
-- **Resposta esperada:** `{"status":"ok", "message": "v1"}`
-
-## 🔄 Configurar GitOps com GitLab
-
-### 1. Criar projeto no GitLab
-
-1. Acesse http://localhost:8080
-2. Faça login com `root` e a senha obtida
-3. Crie um novo projeto: `iot-manifests`
-4. Clone o projeto localmente
-
-### 2. Adicionar manifestos ao GitLab
-
-```bash
-cd /tmp
-git clone http://localhost:8080/root/iot-manifests.git
-cd iot-manifests
-
-# Copiar manifestos
-cp /home/llima-ce/code/42-inception_of_things/bonus/remote/* .
-
-# Commit e push
-git add .
-git commit -m "Initial commit"
-git push
-```
-
-### 3. Configurar Argo CD para usar GitLab
-
-Edite `confs/application.yaml` e mude:
+### GitLab Helm Values
 
 ```yaml
-source:
-  repoURL: http://gitlab-webservice-default.gitlab.svc.cluster.local:8181/root/iot-manifests.git
+global:
+  hosts:
+    domain: localhost
+    https: false
+  edition: ce
+  ingress:
+    class: traefik
+    configureCertmanager: false
+
+gitlab-runner:
+  install: false
+
+prometheus:
+  install: false
+
+# Minimal replicas for local environment
+gitlab:
+  webservice:
+    minReplicas: 1
+    maxReplicas: 1
 ```
 
-Aplique:
+### Argo CD Application
+
+```yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: wil-playground
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: http://gitlab-webservice-default.gitlab.svc.cluster.local:8181/llimace/llima-ce.git
+    targetRevision: HEAD
+    path: .
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: dev
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+```
+
+---
+
+## 🎮 Uso
+
+### Acessar Serviços
+
+#### GitLab Web UI
 
 ```bash
-kubectl apply -f confs/application.yaml
+# URL
+http://gitlab.localhost:8080
+
+# Credenciais
+Username: llimace
+Password: t1t2t3t4@
 ```
 
-### 4. Testar GitOps (v1 → v2)
+#### Argo CD Web UI
 
-1. Edite `deployment.yaml` no GitLab (via UI ou localmente)
-2. Mude `image: wil42/playground:v1` para `v2`
-3. Commit e push
-4. Aguarde Argo CD sincronizar (~3 minutos)
-5. Teste: `curl http://localhost:8888`
+```bash
+# URL
+https://localhost:8090
 
-## 🧪 Testar
+# Credenciais
+Username: admin
+Password: $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+```
+
+#### Aplicação
 
 ```bash
 # Testar aplicação
 curl http://localhost:8888
 
-# Ver pods
-kubectl get pods -n dev
-kubectl get pods -n gitlab
-kubectl get pods -n argocd
-
-# Ver serviços
-kubectl get svc -n dev
-kubectl get svc -n gitlab
-
-# Ver aplicação no Argo CD
-kubectl get applications -n argocd
+# Resposta esperada (v1)
+{"status":"ok", "message": "v1"}
 ```
 
-## 🗑️ Limpar tudo
+### Comandos Úteis
 
 ```bash
+# Ver status do cluster
+kubectl get nodes
+
+# Ver todos os pods
+kubectl get pods -A
+
+# Ver status do Argo CD
+kubectl get applications -n argocd
+
+# Ver logs da aplicação
+kubectl logs -n dev deployment/wil-playground
+
+# Ver logs do GitLab
+kubectl logs -n gitlab deployment/gitlab-webservice-default
+
+# Forçar sincronização do Argo CD
+kubectl patch application wil-playground -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"revision":"HEAD"}}}'
+```
+
+---
+
+## 🔄 GitOps Workflow
+
+### Fluxo Completo: v1 → v2
+
+#### 1. Clonar Repositório
+
+```bash
+cd ~
+git clone http://llimace:t1t2t3t4@@gitlab.localhost:8080/llimace/llima-ce.git
+cd llima-ce
+```
+
+#### 2. Verificar Estado Atual
+
+```bash
+# Ver manifesto atual
+cat deployment.yaml | grep image
+# Output: image: wil42/playground:v1
+
+# Testar aplicação
+curl http://localhost:8888
+# Output: {"status":"ok", "message": "v1"}
+```
+
+#### 3. Atualizar Aplicação para v2
+
+```bash
+# Editar deployment
+sed -i 's/playground:v1/playground:v2/' deployment.yaml
+
+# Verificar mudança
+cat deployment.yaml | grep image
+# Output: image: wil42/playground:v2
+```
+
+#### 4. Commit e Push
+
+```bash
+git add deployment.yaml
+git commit -m "Update application to v2"
+git push origin main
+```
+
+#### 5. Aguardar Sincronização
+
+```bash
+# Argo CD sincroniza automaticamente a cada ~3 minutos
+# Ou forçar sincronização imediata:
+kubectl patch application wil-playground -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"revision":"HEAD"}}}'
+
+# Aguardar novo pod
+kubectl wait --for=condition=ready pod -l app=wil-playground -n dev --timeout=60s
+```
+
+#### 6. Verificar Atualização
+
+```bash
+# Ver novo pod
+kubectl get pods -n dev
+
+# Testar aplicação
+curl http://localhost:8888
+# Output: {"status":"ok", "message": "v2"}
+```
+
+### Diagrama do Fluxo:
+
+```
+┌──────────────┐
+│  Developer   │
+└──────┬───────┘
+       │ git push
+       ▼
+┌──────────────┐
+│   GitLab     │
+│  Repository  │
+└──────┬───────┘
+       │ webhook/polling
+       ▼
+┌──────────────┐
+│   Argo CD    │
+│  (Monitor)   │
+└──────┬───────┘
+       │ kubectl apply
+       ▼
+┌──────────────┐
+│  Kubernetes  │
+│   Cluster    │
+└──────┬───────┘
+       │ deploy
+       ▼
+┌──────────────┐
+│ Application  │
+│   Updated    │
+└──────────────┘
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Problema: GitLab não inicia
+
+**Sintomas:**
+```bash
+kubectl get pods -n gitlab
+# Pods em CrashLoopBackOff ou Pending
+```
+
+**Solução:**
+```bash
+# Verificar recursos
+kubectl describe pod -n gitlab <pod-name>
+
+# Aguardar mais tempo (GitLab pode levar 10-15 minutos)
+kubectl wait --for=condition=ready pod -l app=webservice -n gitlab --timeout=900s
+
+# Verificar logs
+kubectl logs -n gitlab deployment/gitlab-webservice-default
+```
+
+### Problema: Argo CD não sincroniza
+
+**Sintomas:**
+```bash
+kubectl get applications -n argocd
+# Status: Unknown ou OutOfSync
+```
+
+**Solução:**
+```bash
+# Verificar credenciais do repositório
+kubectl get secret -n argocd gitlab-repo-creds -o yaml
+
+# Verificar se repositório é público
+kubectl exec -n gitlab deployment/gitlab-toolbox -c toolbox -- \
+  gitlab-rails runner "
+    project = Project.find_by_full_path('llimace/llima-ce')
+    puts project.visibility_level
+  "
+
+# Forçar sincronização
+kubectl delete application wil-playground -n argocd
+kubectl apply -f confs/application.yaml
+```
+
+### Problema: Aplicação não responde
+
+**Sintomas:**
+```bash
+curl http://localhost:8888
+# Connection refused
+```
+
+**Solução:**
+```bash
+# Verificar pods
+kubectl get pods -n dev
+
+# Verificar service
+kubectl get svc -n dev
+
+# Verificar logs
+kubectl logs -n dev deployment/wil-playground
+
+# Verificar port-forward
+kubectl port-forward -n dev svc/wil-playground 8888:8888
+```
+
+### Problema: Erro 422 no GitLab
+
+**Sintomas:**
+- Erro "422: The change you requested was rejected" ao fazer login
+
+**Solução:**
+```bash
+# Limpar cookies do navegador
+# Ou usar modo anônimo (Ctrl+Shift+N)
+
+# Resetar sessão do usuário
+kubectl exec -n gitlab deployment/gitlab-toolbox -c toolbox -- \
+  gitlab-rails runner "
+    user = User.find_by_username('llimace')
+    user.update_column(:reset_password_token, nil)
+  "
+```
+
+### Problema: Port-forward não funciona
+
+**Sintomas:**
+```bash
+# Argo CD não acessível em https://localhost:8090
+```
+
+**Solução:**
+```bash
+# Verificar se port-forward está ativo
+ps aux | grep "port-forward"
+
+# Reiniciar port-forward
+pkill -f "port-forward.*argocd"
+kubectl port-forward svc/argocd-server -n argocd 8090:443 > /dev/null 2>&1 &
+```
+
+---
+
+## 🔑 Credenciais
+
+### GitLab
+
+**Web UI:**
+- URL: http://gitlab.localhost:8080
+- Username: `llimace`
+- Password: `t1t2t3t4@`
+
+**Root (Admin):**
+```bash
+kubectl get secret gitlab-gitlab-initial-root-password -n gitlab -o jsonpath='{.data.password}' | base64 -d && echo
+```
+
+**Git Clone:**
+```bash
+git clone http://llimace:t1t2t3t4@@gitlab.localhost:8080/llimace/llima-ce.git
+```
+
+### Argo CD
+
+**Web UI:**
+- URL: https://localhost:8090
+- Username: `admin`
+- Password:
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d && echo
+```
+
+**CLI Login:**
+```bash
+argocd login localhost:8090 --username admin --password $(kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath='{.data.password}' | base64 -d)
+```
+
+---
+
+## 🧹 Limpeza
+
+### Remover Tudo
+
+```bash
+cd bonus
 make clean
 ```
 
 Ou manualmente:
 
 ```bash
+# Deletar cluster K3d
 k3d cluster delete iot-bonus
+
+# Remover entrada do /etc/hosts (manual)
+sudo nano /etc/hosts
+# Remover linha: 127.0.0.1 gitlab.localhost
 ```
 
-## 📁 Estrutura
-
-```
-bonus/
-├── Makefile                  # Automação completa
-├── scripts/
-│   ├── install_tools.sh      # Instala Docker, kubectl, k3d, Helm
-│   ├── setup_argocd.sh       # Cria cluster e instala Argo CD
-│   ├── setup_gitlab.sh       # Instala GitLab com Helm
-│   ├── deploy_app.sh         # Deploy da aplicação
-│   └── clean_and_test.sh     # Limpa tudo
-├── confs/
-│   ├── application.yaml      # Argo CD Application
-│   └── dev-namespace.yaml    # Namespace dev
-└── remote/
-    ├── deployment.yaml       # Deployment
-    └── service.yaml          # Service (LoadBalancer)
-```
-
-## ⚙️ Configuração do Cluster
-
-- **Nome:** iot-bonus
-- **Servers:** 1
-- **Agents:** 0
-- **API Port:** 6550
-- **Port Mappings:**
-  - 8080:80 (GitLab HTTP)
-  - 8888:8888 (Aplicação)
-  - 2222:22 (GitLab SSH)
-
-## 🐛 Troubleshooting
-
-### GitLab não inicia
+### Reinstalar
 
 ```bash
-# Ver pods do GitLab
-kubectl get pods -n gitlab
-
-# Ver logs
-kubectl logs -n gitlab -l app=webservice
-
-# Aguardar mais tempo (pode demorar até 10 minutos)
+cd bonus
+make re
 ```
 
-### Aplicação não responde
+---
 
-```bash
-# Verificar pods
-kubectl get pods -n dev
+## 📚 Referências
 
-# Ver logs
-kubectl logs -n dev deployment/wil-playground
+- [K3d Documentation](https://k3d.io/)
+- [Argo CD Documentation](https://argo-cd.readthedocs.io/)
+- [GitLab Helm Chart](https://docs.gitlab.com/charts/)
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [GitOps Principles](https://www.gitops.tech/)
 
-# Verificar service
-kubectl get svc -n dev
-```
+---
 
-### Argo CD não sincroniza
+## 🎓 Conceitos Aprendidos
 
-```bash
-# Ver status
-kubectl get applications -n argocd
+### GitOps
 
-# Ver detalhes
-kubectl describe application wil-playground -n argocd
+- **Declarative Infrastructure**: Infraestrutura como código
+- **Version Control**: Todo estado do cluster versionado no Git
+- **Automated Sync**: Sincronização automática entre Git e cluster
+- **Self-Healing**: Cluster se auto-corrige para estado desejado
 
-# Forçar sync
-kubectl patch application wil-playground -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{"revision":"HEAD"}}}'
-```
+### Kubernetes
 
-## 📚 Componentes
+- **Namespaces**: Isolamento de recursos
+- **Deployments**: Gerenciamento de pods
+- **Services**: Exposição de aplicações
+- **LoadBalancer**: Acesso externo a serviços
 
-- **K3d:** Kubernetes em Docker
-- **K3s:** Kubernetes leve
-- **Argo CD:** GitOps continuous delivery
-- **GitLab:** Git repository e CI/CD
-- **Helm:** Package manager para Kubernetes
-- **Traefik:** Ingress controller (incluído no K3s)
+### CI/CD
 
-## 🎓 Conceitos
+- **Continuous Delivery**: Entrega contínua automatizada
+- **GitOps Workflow**: Fluxo baseado em Git
+- **Automated Deployment**: Deploy automático via Argo CD
 
-- **GitOps:** Git como fonte única da verdade
-- **Continuous Delivery:** Deploy automático via Git
-- **Infrastructure as Code:** Infraestrutura definida em código
-- **Declarative Configuration:** Estado desejado vs estado atual
+---
+
+## 🏆 Conclusão
+
+Este projeto demonstra uma **infraestrutura GitOps completa e funcional** usando ferramentas modernas de DevOps. O sistema implementado permite:
+
+✅ **Versionamento** completo da infraestrutura no Git  
+✅ **Automação** de deploys via Argo CD  
+✅ **Self-healing** do cluster Kubernetes  
+✅ **Visibilidade** completa via UIs do GitLab e Argo CD  
+✅ **Reprodutibilidade** total do ambiente  
+
+**Próximos Passos:**
+- Adicionar mais aplicações ao cluster
+- Implementar CI pipeline no GitLab
+- Configurar monitoramento com Prometheus/Grafana
+- Adicionar testes automatizados
+
+---
+
+**Desenvolvido como parte do projeto Inception of Things - 42 School**
+
+**Autor**: llima-ce  
+**Data**: 2025  
+**Licença**: MIT

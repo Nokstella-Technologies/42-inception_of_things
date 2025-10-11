@@ -1,188 +1,551 @@
+# 🚀 Inception of Things
 
-# Inception-of-Things ( IoT ) 
+## 📋 Índice
 
-Summary: This document is a System Administration related exercise. Version: 3.1 Contents 
+- [Visão Geral](#visão-geral)
+- [Estrutura do Projeto](#estrutura-do-projeto)
+- [Tecnologias](#tecnologias)
+- [Partes do Projeto](#partes-do-projeto)
+- [Instalação Rápida](#instalação-rápida)
+- [Progressão de Aprendizado](#progressão-de-aprendizado)
+- [Conceitos Principais](#conceitos-principais)
+- [Requisitos](#requisitos)
+- [Troubleshooting Geral](#troubleshooting-geral)
+- [Recursos](#recursos)
 
-I Preamble 2II Introduction 3III General guidelines 4IV Mandatory part 5
+---
 
-IV.1 Part 1: K3s and Vagrant . . . . . . . . . . . . . . . . . . . . . . . . . 6IV.2 Part 2: K3s and three simple applications . . . . . . . . . . . . . . . . 9IV.3 Part 3: K3d and Argo CD . . . . . . . . . . . . . . . . . . . . . . . . 12 
+## 🎯 Visão Geral
 
-V Bonus part 16 VI Submission and peer-evaluation 17 
+**Inception of Things** é um projeto educacional da **42 School** focado em **Kubernetes, GitOps e DevOps**. O projeto é dividido em 4 partes progressivas, cada uma construindo sobre os conceitos da anterior.
 
-1Chapter I Preamble 
+### Objetivos do Projeto:
 
-> 2
+1. ✅ Entender fundamentos do Kubernetes
+2. ✅ Configurar clusters multi-node
+3. ✅ Implementar GitOps com Argo CD
+4. ✅ Criar infraestrutura completa com GitLab local
 
-# Chapter II Introduction 
+---
 
-This project aims to deepen your knowledge by making you use K3d and K3s with 
+## 📁 Estrutura do Projeto
 
-Vagrant .You will learn how to set up a personal virtual machine with Vagrant and the distribution of your choice . Then, you will learn how to use K3s and its Ingress .Last but not least, you will discover K3d that will simplify your life. These steps will get you started with Kubernetes .
+```
+42-inception_of_things/
+├── README.md                    # Este arquivo
+├── p1/                          # Part 1: Vagrant + K3s Básico
+│   ├── README.md
+│   ├── Vagrantfile
+│   └── scripts/
+├── p2/                          # Part 2: K3s Multi-node + Apps
+│   ├── README.md
+│   ├── Vagrantfile
+│   └── manifests/
+├── p3/                          # Part 3: K3d + Argo CD
+│   ├── README.md
+│   ├── Makefile
+│   ├── scripts/
+│   ├── confs/
+│   └── remote/
+└── bonus/                       # Bonus: GitLab + Argo CD
+    ├── README.md
+    ├── Makefile
+    ├── scripts/
+    ├── confs/
+    └── remote/
+```
 
-This project is a minimal introduction to Kubernetes. Indeed, this tool is too complex to be mastered in a single subject. 
+---
 
-3Chapter III General guidelines 
+## 🛠️ Tecnologias
 
-• The whole project has to be done in a virtual machine .
+### Infraestrutura:
 
-• You have to put all the configuration files of your project in folders located at the root of your repository (go to Submission and peer-evaluation for more information). The folders of the mandatory part will be named: p1 , p2 and p3 , and the bonus one: bonus .
+- **Vagrant**: Automação de VMs (Part 1 e 2)
+- **VirtualBox**: Hypervisor para VMs
+- **Docker**: Containerização
+- **K3s**: Kubernetes leve
+- **K3d**: K3s em Docker
 
-• This topic requires you to apply concepts that, depending on your background, you may not have covered yet. We therefore advise you not to be afraid to read a lot of documentation to learn how to use K8s with K3s , as well as K3d .
+### Kubernetes:
 
-You can use any tools you want to set up your host virtual machine as well as the provider used in Vagrant. 
+- **kubectl**: CLI do Kubernetes
+- **Helm**: Gerenciador de pacotes
+- **Traefik**: Ingress Controller
 
-4Chapter IV Mandatory part 
+### GitOps:
 
-This project will consist of setting up several environments under specific rules. It is divided into three parts you have to do in the following order: 
+- **Argo CD**: Continuous Delivery
+- **GitLab CE**: Sistema de controle de versão
+- **GitHub**: Repositório remoto
 
-• Part 1: K3s and Vagrant 
+### Linguagens:
 
-• Part 2: K3s and three simple applications 
+- **Bash**: Scripts de automação
+- **YAML**: Manifestos Kubernetes
+- **Makefile**: Automação de tarefas
 
-• Part 3: K3d and Argo CD 5Inception-of-Things ( IoT ) 
+---
 
-## IV.1 Part 1: K3s and Vagrant 
+## 📚 Partes do Projeto
 
-To begin, you have to set up 2 machines .Write your first Vagrantfile using the latest stable version of the distribution of your choice as your operating system. It is STRONGLY advised to allow only the bare minimum in terms of resources: 1 CPU and 512 MB of RAM (or 1024). The ma-chines must be run using Vagrant .Here are the expected specifications: 
+### Part 1: Fundamentos com Vagrant e K3s
 
-• The machine names must be the login of someone from your team. The hostname of the first machine must be followed by the capital letter S (like Server ). The hostname of the second machine must be followed by SW (like ServerWorker ). 
+**Objetivo**: Criar cluster Kubernetes básico com 2 VMs
 
-• Have a dedicated IP on the primary network interface. The IP of the first machine (Server ) will be 192.168.56.110 , and the IP of the second machine ( ServerWorker )will be 192.168.56.111 .
+**Tecnologias**:
+- Vagrant
+- K3s (1 server + 1 agent)
 
-• Be able to connect with SSH on both machines with no password. 
+**Tempo**: ~30 minutos
 
-> You will set up your Vagrantfile according to modern practices.
+**O que você aprende**:
+- Criar VMs com Vagrant
+- Instalar K3s
+- Configurar master e worker nodes
+- Comandos básicos do kubectl
 
-You must install K3s on both machines: 
+📖 [Documentação Completa](./p1/README.md)
 
-• In the first one ( Server ), it will be installed in controller mode. 
+---
 
-• In the second one ( ServerWorker ), in agent mode.   
+### Part 2: Cluster Multi-node com Aplicações
 
-> You will have to use kubectl (and therefore install it as well).
+**Objetivo**: Cluster com 3 nodes e 3 aplicações web
 
-6Inception-of-Things ( IoT ) Here is a basic example of a Vagrantfile :
+**Tecnologias**:
+- Vagrant
+- K3s (1 server + 2 agents)
+- Traefik Ingress
+- 3 aplicações web
 
-$> cat Vagrantfile Vagrant.configure(2) do |config| [...] config.vm.box = REDACTED config.vm.box_url = REDACTED config.vm.define "wilS" do |control| control.vm.hostname = "wilS" control.vm.network REDACTED, ip: "192.168.56.110" control.vm.provider REDACTED do |v| v.customize ["modifyvm", :id, "--name", "wilS"] [...] end config.vm.provision :shell, :inline => SHELL [...] SHELL control.vm.provision "shell", path: REDACTED end config.vm.define "wilSW" do |control| control.vm.hostname = "wilSW" control.vm.network REDACTED, ip: "192.168.56.111" control.vm.provider REDACTED do |v| v.customize ["modifyvm", :id, "--name", "wilSW"] [...] end config.vm.provision "shell", inline: <<-SHELL [..] SHELL control.vm.provision "shell", path: REDACTED end end 
+**Tempo**: ~45 minutos
 
-7Inception-of-Things ( IoT ) Here is an example when the virtual machines are launched: 
+**O que você aprende**:
+- Cluster multi-node
+- Deployments e réplicas
+- Services e Ingress
+- Load balancing
+- High availability
+
+📖 [Documentação Completa](./p2/README.md)
+
+---
+
+### Part 3: GitOps com K3d e Argo CD
+
+**Objetivo**: Implementar GitOps usando Argo CD
+
+**Tecnologias**:
+- K3d (Kubernetes em Docker)
+- Argo CD
+- GitHub
+- GitOps workflow
+
+**Tempo**: ~1 hora
+
+**O que você aprende**:
+- K3d para desenvolvimento local
+- Argo CD instalação e configuração
+- GitOps principles
+- Continuous Delivery
+- Automated deployment (v1 → v2)
+
+📖 [Documentação Completa](./p3/README.md)
+
+---
+
+### Bonus: GitLab Local + Argo CD
+
+**Objetivo**: Infraestrutura GitOps completa com GitLab local
+
+**Tecnologias**:
+- K3d
+- GitLab CE (Helm)
+- Argo CD
+- GitOps completo
+
+**Tempo**: ~2 horas
+
+**O que você aprende**:
+- Instalar GitLab via Helm
+- Configurar GitLab local
+- Integrar GitLab com Argo CD
+- GitOps workflow completo
+- Self-hosted Git infrastructure
+
+📖 [Documentação Completa](./bonus/README.md)
+
+---
+
+## ⚡ Instalação Rápida
+
+### Part 1:
+```bash
+cd p1
+vagrant up
+vagrant ssh S -c "kubectl get nodes"
+```
+
+### Part 2:
+```bash
+cd p2
+vagrant up
+curl -H "Host: app1.com" http://192.168.56.110
+```
+
+### Part 3:
+```bash
+cd p3
+make all
+curl http://localhost:8888
+```
+
+### Bonus:
+```bash
+cd bonus
+make all
+./scripts/configure_hosts.sh
+curl http://localhost:8888
+```
 
-Here is an example when the configuration is not complete: 
+---
 
-Here is an example when the machines are correctly configured:  
+## 📈 Progressão de Aprendizado
 
-> On the example above the use of ifconfig eth1 is done under macOS, if you are under the latest version of linux the command is: ip a show eth1
+```
+Part 1: Fundamentos
+    ↓
+    • Kubernetes básico
+    • Nodes e pods
+    • kubectl commands
+    ↓
+Part 2: Aplicações
+    ↓
+    • Multi-node cluster
+    • Deployments
+    • Services e Ingress
+    • Load balancing
+    ↓
+Part 3: GitOps
+    ↓
+    • K3d
+    • Argo CD
+    • Continuous Delivery
+    • Automated deployment
+    ↓
+Bonus: Infraestrutura Completa
+    ↓
+    • GitLab local
+    • Self-hosted Git
+    • Complete GitOps
+    • Production-like setup
+```
 
-8Inception-of-Things ( IoT ) 
+---
 
-## IV.2 Part 2: K3s and three simple applications 
+## 🎓 Conceitos Principais
 
-You now understand the basics of K3s . Time to go further! To complete this part, you will need only one virtual machine with the distribution of your choice (latest stable version ) and K3s in server mode installed. You will set up 3 web applications of your choice that will run in your K3s instance. You will have to be able to access them depending on the HOST used when making a request to the IP address 192.168.56.110. The name of this machine will be your login followed by S (e.g., wilS if your login is wil ). Here is a simple example diagram: 
+### Kubernetes
 
-When a client inputs the IP address 192.168.56.110 in their web browser with the 
+- **Nodes**: Máquinas no cluster (master/worker)
+- **Pods**: Menor unidade deployável
+- **Deployments**: Gerenciamento de réplicas
+- **Services**: Exposição de aplicações
+- **Ingress**: Roteamento HTTP
+- **Namespaces**: Isolamento de recursos
 
-HOST app1.com , the server must display app1. When the HOST app2.com is used, the server must display app2. Otherwise, app3 will be selected by default.  
+### GitOps
 
-> As you can see, application number 2 has 3 replicas. Adapt your configuration to create the replicas.
+- **Declarative**: Infraestrutura como código
+- **Version Control**: Estado versionado no Git
+- **Automated Sync**: Sincronização automática
+- **Self-Healing**: Auto-correção do cluster
+- **Audit Trail**: Histórico completo de mudanças
 
-9Inception-of-Things ( IoT ) First, here is an expected result when the virtual machine is not configured: 
+### DevOps
 
-10 Inception-of-Things ( IoT ) Here is an expected result when the virtual machine is correctly configured: 
+- **Infrastructure as Code**: Infraestrutura declarativa
+- **Continuous Delivery**: Deploy contínuo
+- **Automation**: Automação de processos
+- **Monitoring**: Observabilidade
+- **Reproducibility**: Ambientes reproduzíveis
 
-The Ingress is not displayed here on purpose. You will have to show it to your evaluators during your defense. 
+---
 
-11 Inception-of-Things ( IoT ) 
+## 📦 Requisitos
 
-## IV.3 Part 3: K3d and Argo CD 
+### Hardware:
 
-You now master a minimalist version of K3S ! Time to set up everything you have just learnt (and much more!) but without Vagrant this time. To begin, install K3D on your virtual machine.    
+- **CPU**: 4 cores (recomendado)
+- **RAM**: 8GB mínimo, 16GB recomendado
+- **Disco**: 20GB livres
 
-> You will need Docker for K3d to work, and probably some other software as well. Therefore, you must write a script to install all the necessary packages and tools during your defense.
+### Software:
 
-First of all, you must understand the difference between K3S and K3D .Once your configuration works as expected, you can start to create your first con-tinuous integration ! To do so, you have to set up a small infrastructure following the logic illustrated by the diagram below: 
+#### Part 1 e 2:
+- Vagrant 2.2.0+
+- VirtualBox 6.0+
 
-You have to create two namespaces :
+#### Part 3 e Bonus:
+- Docker 20.10+
+- kubectl 1.24+
+- k3d 5.0+
+- Helm 3.0+
+- Git 2.0+
 
-• The first one will be dedicated to Argo CD .
+### Sistema Operacional:
 
-• The second one will be named dev and will contain an application. This application will be automatically deployed by Argo CD using your online Github repository.   
+- Ubuntu 20.04+ (recomendado)
+- Arch Linux
+- macOS 10.15+
+- Windows 10+ (com WSL2)
 
-> Yes, indeed. You will have to create a public repository on Github where you will push your configuration files. You are free to organize it the way you like. The only mandatory requirement is to put the login of a member of the group in the name of your repository.
+---
 
-12 Inception-of-Things ( IoT ) The application to be deployed must have two different versions (read about tag-ging if you are unfamiliar with it). You have two options: 
+## 🐛 Troubleshooting Geral
 
-• You can use the pre-made application created by Wil, which is available on Dock-erhub. 
+### Problema: Portas em uso
 
-• Or you can code and use your own application. Create a public Dockerhub repos-itory to push a Docker image of your application. Also, tag its two versions this way: v1 and v2 .
+```bash
+# Verificar portas
+sudo lsof -i :8080
+sudo lsof -i :8888
 
-You can find Wil’s application on Dockerhub here: https://hub.docker.com/r/wil42/playground. The application uses port 8888. Find the two versions in the TAG section. 
+# Matar processo
+sudo kill -9 <PID>
+```
 
-If you decide to create your own application, it must be made available thanks to a public Docker image pushed into a Dockerhub repository. The two versions of your application must also have a few differences. 
+### Problema: Docker não funciona
 
-You must be able to change the version from your public Github repository, then check that the application has been correctly updated. Here is an example showing the two namespaces and the POD located in the dev 
+```bash
+# Verificar Docker
+docker ps
 
-namespace :             
+# Reiniciar Docker
+sudo systemctl restart docker
 
-> $> k get ns NAME STATUS AGE [..] argocd Active 19h dev Active 19h $> k get pods -n dev NAME READY STATUS RESTARTS AGE wil-playground-65f745fdf4-d2l2r 1/1 Running 08m9s $>
+# Verificar permissões
+sudo usermod -aG docker $USER
+newgrp docker
+```
 
-13 Inception-of-Things ( IoT ) Here is an example of launching Argo CD that was configured: 
+### Problema: kubectl não conecta
 
-We can check that our application uses the version we expect (in this case, the v1 ): 
+```bash
+# Verificar contexto
+kubectl config current-context
 
-$> cat deployment.yaml | grep v1 - image: wil42/playground:v1 $> curl http://localhost:8888/ {"status":"ok", "message": "v1"} 
+# Listar contextos
+kubectl config get-contexts
 
-Here is a screenshot of Argo CD with our v1 application using Github: 
+# Mudar contexto
+kubectl config use-context <context-name>
+```
 
-Below, we update our Github repository by changing the version of our application: 
+### Problema: VMs não iniciam (Vagrant)
 
-$>sed -i 's/wil42\/playground\:v1/wil42\/playground\:v2/g ' deployment.yaml $>g up "v2" # git add+commit+push [..] a773f39..999b9fe master -> master $> cat deployment.yaml | grep v2 - image: wil42/playground:v2 
+```bash
+# Verificar VirtualBox
+vboxmanage list vms
 
-14 Inception-of-Things ( IoT ) You can see thanks to Argo CD that the application is synchronized: 
+# Verificar módulos do kernel
+sudo modprobe vboxdrv
 
-The application was successfully updated: 
+# Recriar VMs
+vagrant destroy -f
+vagrant up
+```
 
-We check that the new version is available: 
+### Problema: Recursos insuficientes
 
-> $> curl http://localhost:8888/ {"status":"ok", "message": "v2"}
+```bash
+# Verificar uso de recursos
+free -h
+df -h
 
-During the evaluation process, you will have to do this operation with the app you chose: Wil’s or yours. 
+# Limpar Docker
+docker system prune -a
 
-15 Chapter V Bonus part 
+# Limpar Vagrant
+vagrant box prune
+```
 
-The following bonus task is intended to be useful: add Gitlab to the lab you completed in Part 3. 
+---
 
-Beware this bonus is complex. The latest version available of Gitlab from the official website is expected. 
+## 📊 Comparação das Partes
 
-You are allowed to use whatever you need to achieve this extra. For example, helm 
+| Aspecto | Part 1 | Part 2 | Part 3 | Bonus |
+|---------|--------|--------|--------|-------|
+| **Tecnologia** | Vagrant + K3s | Vagrant + K3s | K3d + Argo CD | K3d + GitLab + Argo CD |
+| **Nodes** | 2 VMs | 3 VMs | 1 Docker | 1 Docker |
+| **Aplicações** | 0 | 3 | 1 | 1 |
+| **GitOps** | ❌ | ❌ | ✅ | ✅ |
+| **Ingress** | ❌ | ✅ | ❌ | ✅ |
+| **Git Local** | ❌ | ❌ | ❌ | ✅ |
+| **Complexidade** | ⭐ | ⭐⭐ | ⭐⭐⭐ | ⭐⭐⭐⭐ |
+| **Tempo Setup** | 30 min | 45 min | 1h | 2h |
 
-could be useful here. 
+---
 
-• Your Gitlab instance must run locally. 
+## 🎯 Objetivos de Aprendizado
 
-• Configure Gitlab to make it work with your cluster. 
+Ao completar este projeto, você será capaz de:
 
-• Create a dedicated namespace named gitlab .
+### Kubernetes:
+- ✅ Criar e gerenciar clusters Kubernetes
+- ✅ Deployar aplicações containerizadas
+- ✅ Configurar networking e ingress
+- ✅ Escalar aplicações
+- ✅ Troubleshoot problemas comuns
 
-• Everything you did in Part 3 must work with your local Gitlab. Turn this extra work in a new folder named bonus and located at the root of your repository. You can add everything needed so your entire cluster works. 
+### GitOps:
+- ✅ Implementar workflow GitOps
+- ✅ Configurar Argo CD
+- ✅ Automatizar deployments
+- ✅ Versionar infraestrutura
+- ✅ Implementar self-healing
 
-The bonus part will only be assessed if the mandatory part is flawless. Flawless means the mandatory part has been fully completed and functions without issues. If you have not passed ALL the mandatory requirements, your bonus part will not be evaluated at all. 
+### DevOps:
+- ✅ Automatizar infraestrutura
+- ✅ Usar Infrastructure as Code
+- ✅ Implementar CI/CD
+- ✅ Gerenciar configurações
+- ✅ Monitorar aplicações
 
-16 Chapter VI Submission and peer-evaluation 
+---
 
-Turn in your assignment in your Git repository as usual. Only the work inside your repos-itory will be evaluated during the defense. Don’t hesitate to double check the names of your folders and files to ensure they are correct. 
+## 📖 Recursos
 
-Reminder: 
+### Documentação Oficial:
 
-• Turn the mandatory part in three folders located at the root of your repository: 
+- [Kubernetes Documentation](https://kubernetes.io/docs/)
+- [K3s Documentation](https://docs.k3s.io/)
+- [K3d Documentation](https://k3d.io/)
+- [Argo CD Documentation](https://argo-cd.readthedocs.io/)
+- [GitLab Documentation](https://docs.gitlab.com/)
+- [Vagrant Documentation](https://www.vagrantup.com/docs)
 
-p1 , p2 and p3 .
+### Tutoriais e Guias:
 
-• Optional: Turn the bonus part in a located at the root of your repository: bonus .Below is an example of the expected directory structure: 
+- [Kubernetes Basics](https://kubernetes.io/docs/tutorials/kubernetes-basics/)
+- [GitOps Principles](https://www.gitops.tech/)
+- [Argo CD Getting Started](https://argo-cd.readthedocs.io/en/stable/getting_started/)
 
-$> find -maxdepth 2 -ls 424242 4 drwxr-xr-x 6 wandre wil42 4096 sept. 17 23:42 . 424242 4 drwxr-xr-x 3 wandre wil42 4096 sept. 17 23:42 ./p1 424242 4 -rw-r--r-- 1 wandre wil42 XXXX sept. 17 23:42 ./p1/Vagrantfile 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p1/scripts 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p1/confs 424242 4 drwxr-xr-x 3 wandre wil42 4096 sept. 17 23:42 ./p2 424242 4 -rw-r--r-- 1 wandre wil42 XXXX sept. 17 23:42 ./p2/Vagrantfile 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p2/scripts 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p1/confs 424242 4 drwxr-xr-x 3 wandre wil42 4096 sept. 17 23:42 ./p3 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p3/scripts 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./p3/confs 424242 4 drwxr-xr-x 3 wandre wil42 4096 sept. 17 23:42 ./bonus 424242 4 -rw-r--r-- 1 wandre wil42 XXXX sept. 17 23:42 ./bonus/Vagrantfile 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./bonus/scripts 424242 4 drwxr-xr-x 2 wandre wil42 4096 sept. 17 23:42 ./bonus/confs 
+### Comunidade:
 
-Any scripts you need will be added in a scripts folder. The configuration files will be in a confs folder. 
+- [Kubernetes Slack](https://kubernetes.slack.com/)
+- [Argo CD GitHub](https://github.com/argoproj/argo-cd)
+- [K3s GitHub](https://github.com/k3s-io/k3s)
 
-The evaluation process will happen on the computer of the evaluated group. 
+---
 
-17
+## 🧹 Limpeza Completa
+
+### Limpar Tudo:
+
+```bash
+# Part 1 e 2
+cd p1 && vagrant destroy -f
+cd ../p2 && vagrant destroy -f
+
+# Part 3
+cd ../p3 && make clean
+
+# Bonus
+cd ../bonus && make clean
+
+# Limpar Docker
+docker system prune -a -f
+
+# Limpar Vagrant
+vagrant box prune
+```
+
+---
+
+## 🏆 Conclusão
+
+Este projeto oferece uma **jornada completa** através do mundo de **Kubernetes e GitOps**, desde conceitos básicos até infraestrutura de produção.
+
+### O que você construiu:
+
+✅ **4 ambientes Kubernetes** diferentes  
+✅ **GitOps workflow** completo  
+✅ **Infraestrutura auto-hospedada** (GitLab)  
+✅ **Continuous Delivery** automatizado  
+✅ **Skills de DevOps** práticas  
+
+### Próximos Passos:
+
+- 🚀 Adicionar monitoramento (Prometheus/Grafana)
+- 🔒 Implementar segurança (RBAC, Network Policies)
+- 📊 Adicionar logging centralizado (ELK Stack)
+- 🔄 Implementar CI pipeline completo
+- ☁️ Migrar para cloud (AWS/GCP/Azure)
+
+---
+
+## 🎓 Certificação
+
+Este projeto faz parte do currículo da **42 School** e demonstra proficiência em:
+
+- Kubernetes Administration
+- GitOps Methodology
+- DevOps Practices
+- Infrastructure as Code
+- Continuous Delivery
+
+---
+
+## 📝 Licença
+
+Este projeto é desenvolvido para fins educacionais como parte do currículo da 42 School.
+
+---
+
+## 👤 Autor
+
+**llima-ce**
+
+- GitHub: [@Nokstella-Technologies](https://github.com/Nokstella-Technologies)
+- Projeto: [42-inception_of_things](https://github.com/Nokstella-Technologies/42-inception_of_things)
+
+---
+
+## 🙏 Agradecimentos
+
+- **42 School** pelo projeto desafiador
+- **K3s Team** pela distribuição leve do Kubernetes
+- **Argo CD Team** pela ferramenta incrível de GitOps
+- **GitLab Team** pela plataforma open-source
+
+---
+
+**Inception of Things - Uma Jornada Completa em Kubernetes e GitOps**
+
+*"The best way to learn is by doing"* 🚀
+
+---
+
+## 📅 Histórico de Versões
+
+- **v1.0.0** (2025): Versão inicial completa
+  - Part 1: Vagrant + K3s básico
+  - Part 2: Multi-node cluster
+  - Part 3: K3d + Argo CD
+  - Bonus: GitLab local + Argo CD
+
+---
+
+## 🔗 Links Rápidos
+
+- [Part 1 README](./p1/README.md)
+- [Part 2 README](./p2/README.md)
+- [Part 3 README](./p3/README.md)
+- [Bonus README](./bonus/README.md)
+- [GitHub Repository](https://github.com/Nokstella-Technologies/42-inception_of_things)
+
+---
+
+**Happy Learning! 🎉**
