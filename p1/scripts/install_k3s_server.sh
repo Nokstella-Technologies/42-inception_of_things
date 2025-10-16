@@ -5,7 +5,7 @@ echo "=== [K3s Server] Stating Contoller mode ==="
 
 echo "--> Install and Update packages"
 sudo apt update -y
-sudo apt install -y curl
+sudo apt install -y curl net-tools
 
 export NODE_IP="192.168.56.110"
 
@@ -19,7 +19,7 @@ else
   echo "[INFO] /usr/local/bin/kubectl already, has been created"
 fi
 
-echo "--> Given permission to vagrant run k3 as admi n"
+echo "--> Given permission to vagrant run k3 as admin"
 chown vagrant:vagrant /etc/rancher/k3s/k3s.yaml
 chown vagrant:vagrant /vagrant
 

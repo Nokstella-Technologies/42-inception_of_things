@@ -4,7 +4,7 @@ set -e
 echo "=== [K3s Agent] Iniciando provisão do nó worker ==="
 echo "--> Atualizando pacotes e instalando curl"
 sudo apt update -y
-sudo apt install -y curl
+sudo apt install -y curl net-tools
 
 if [ ! -f /vagrant/node-token ]; then
   echo "[ERRO] Arquivo /vagrant/node-token não encontrado!"
